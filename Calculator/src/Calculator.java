@@ -1,53 +1,65 @@
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static Exception.CalculatorException.*;
 
 public class Calculator {
 
-    private final String MINUS = "-";
-    private final String COLUMN = ":";
-    private final String COMMA = ",";
-    private final String BLANK = " ";
-    private final String START_SEPARATOR = "//";
-    private final String END_SEPARATOR = "\n";
+
     public Calculator() {
     }
 
     public int add(String expression) {
-
-        String correctExpression = unifyRegex(expression);
-        validExpression(expression);
-
-        int answer = 0;
-        String[] numbers = correctExpression.split(BLANK);
-
-        for(String number : numbers) {
-            answer += Integer.parseInt(number);
+        if (isNull(expression)) {
+            return 0;
         }
+        String[] numbers = split(expression);
 
-        return answer;
+        return sum(toInt(numbers));
     }
 
-    private void validExpression(String expression) {
-        if(expression.contains(MINUS)) {
+    private String[] split(String expression) {
+        Matcher m = Pattern.compile(Literal.CUSTOM_REGEX).matcher(expression);
+
+        if (m.find()) {
+            String customDelimiter = m.group(1);
+            return m.group(2).split(customDelimiter);
+        }
+
+        return expression.split(Literal.COMMA + Literal.OR + Literal.COLUMN);
+    }
+
+    private static int sum(int[] numbers) {
+        int sum = 0;
+
+        for (int number : numbers) {
+            sum += number;
+        }
+
+        return sum;
+    }
+
+    private int[] toInt(String[] numbers) {
+        int[] values = new int[numbers.length];
+
+        for (int i = 0; i < values.length; i++) {
+            values[i] += toPositive(numbers[i]);
+        }
+
+        return values;
+    }
+
+    private boolean isNull(String expression) {
+        return expression == null || expression.equals(Literal.BLANK);
+    }
+
+    private int toPositive(String number) {
+        int value = Integer.parseInt(number);
+        if (value < 0) {
             throw new RuntimeException(MINUS_EXCEPTION.getMessage());
         }
+        return value;
     }
-
-    private String unifyRegex(String expression) {
-        String unifiedExpression = expression;
-        if(expression.contains(START_SEPARATOR) && expression.contains(END_SEPARATOR)) {
-            String customRegex = expression.split(START_SEPARATOR)[1].split(END_SEPARATOR)[0];
-            unifiedExpression = expression.split(END_SEPARATOR)[1];
-            unifiedExpression = unifiedExpression.replaceAll(customRegex, BLANK);
-        }
-
-        unifiedExpression = unifiedExpression.replaceAll(COLUMN, BLANK);
-        unifiedExpression = unifiedExpression.replaceAll(COMMA, BLANK);
-
-        return unifiedExpression;
-
-    }
-
-
 
 
 }
